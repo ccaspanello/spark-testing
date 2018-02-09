@@ -2,6 +2,7 @@ language: java
 jdk:
   - openjdk8
   - oraclejdk8
+  - oraclejdk9
 env:
   matrix:
     - PROFILE=apache
@@ -9,3 +10,6 @@ env:
     - PROFILE=cdh513
 
 script: "mvn clean install -P ${PROFILE}"
+
+after_success:
+  - mvn clean test jacoco:report coveralls:report
