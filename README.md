@@ -1,5 +1,6 @@
 # Spark Testing
 [![Build Status](https://travis-ci.org/ccaspanello/spark-testing.svg?branch=master)](https://travis-ci.org/ccaspanello/spark-testing)
+[![Coverage Status](https://coveralls.io/repos/github/ccaspanello/spark-testing/badge.svg?branch=master)](https://coveralls.io/github/ccaspanello/spark-testing?branch=master)
 
 Project to learn how to effectively develop and test Spark applications.
 
