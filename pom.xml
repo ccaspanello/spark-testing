@@ -18,6 +18,8 @@
 
   <modules>
     <module>spark-pi</module>
+    <module>mini-cluster-test</module>
+    <module>yaml-properties</module>
   </modules>
 
   <dependencyManagement>
@@ -40,12 +42,12 @@
         <version>6.13.1</version>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>com.google.inject</groupId>
-        <artifactId>guice</artifactId>
-        <version>4.0</version>
-        <scope>test</scope>
-      </dependency>
+      <!--<dependency>-->
+        <!--<groupId>com.google.inject</groupId>-->
+        <!--<artifactId>guice</artifactId>-->
+        <!--<version>4.0</version>-->
+        <!--<scope>test</scope>-->
+      <!--</dependency>-->
     </dependencies>
   </dependencyManagement>
 
