@@ -1,10 +1,11 @@
 package com.github.ccaspanello.spark.etl.api;
 
-import com.github.ccaspanello.spark.etl.AppContext;
+import com.github.ccaspanello.spark.etl.TransContext;
 import com.github.ccaspanello.spark.etl.StepRegistry;
-import com.github.ccaspanello.spark.etl.gson.TransMetaConverter;
-import org.apache.commons.lang.text.StrSubstitutor;
-import org.apache.spark.sql.SparkSession;
+import com.github.ccaspanello.spark.etl.step.rowsFromResult.RowsFromResult;
+import com.github.ccaspanello.spark.etl.step.rowsToResult.RowsToResult;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,49 +30,45 @@ public class Transformation implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger( Transformation.class );
 
-  private final AppContext appContext;
+  private final TransContext transContext;
   private final String name;
-
   private TransMeta transMeta;
 
-  public Transformation( AppContext appContext, TransMeta transMeta ) {
-    this.appContext = appContext;
+  public Transformation( TransContext transContext, TransMeta transMeta ) {
     this.name = transMeta.getName();
+    this.transContext = transContext;
     this.transMeta = transMeta;
-  }
-
-  /**
-   * Updates TranMeta model with runtime parameters
-   *
-   * @param parameters
-   */
-  public void injectParameters( Map<String, String> parameters ) {
-    TransMetaConverter transMetaConverter = new TransMetaConverter();
-    String json = transMetaConverter.toJson( transMeta );
-
-    StrSubstitutor sub = new StrSubstitutor(parameters);
-    String newJson = sub.replace(json);
-    TransMeta newTransMeta = transMetaConverter.fromJson( newJson );
-    this.transMeta = newTransMeta;
   }
 
   /**
    * Execute transformation
    */
-  public void execute() {
-    SparkSession session = new SparkSession( appContext.getSparkContext() );
+  public Result execute() {
     List<Step> executionPlan = createExecutionPlan();
-    LOG.warn( "RUNNING STEPS" );
-    LOG.warn( "=============================" );
-    for ( Step step : executionPlan ) {
-      LOG.warn( "***** -> {}", step.getStepMeta().getName() );
-      step.setSparkSession( session );
-      step.execute();
-    }
+    executePlan( executionPlan );
+    return new Result( executionPlan );
   }
 
-  private List<Step> createExecutionPlan(){
-    DirectedGraph<Step, Hop> graph = createGraph( transMeta, appContext.getStepRegistry() );
+  public Result executeSubtrans( Dataset<Row> incomming ) {
+    List<Step> executionPlan = createExecutionPlan();
+
+    // Inject Starting Dataset
+    RowsFromResult rowsFromResult = (RowsFromResult) executionPlan.stream().filter(
+      step -> step.getClass().equals( RowsFromResult.class ) )
+      .findFirst().get();
+    rowsFromResult.setInitialDataset( incomming );
+
+    executePlan( executionPlan );
+
+    // Return Ending Dataset
+    RowsToResult rowsToResult =
+      (RowsToResult) executionPlan.stream().filter( step -> step.getClass().equals( RowsToResult.class ) ).findFirst()
+        .get();
+    return new Result(executionPlan);
+  }
+
+  private List<Step> createExecutionPlan() {
+    DirectedGraph<Step, Hop> graph = createGraph( transMeta, transContext.getStepRegistry() );
     LOG.warn( "STEP ORDER" );
     LOG.warn( "=============================" );
     List<Step> executionPlan = new ArrayList<>();
@@ -86,25 +82,23 @@ public class Transformation implements Serializable {
       LOG.warn( "   - Incoming: {}", incoming.size() );
       LOG.warn( "   - Outgoing: {}", outgoing.size() );
 
-      Set<Step> incomingSteps = new HashSet<>();
-      for ( Hop hop : incoming ) {
-        incomingSteps.add( hop.incomingStep() );
-      }
-
-      Set<Step> outgoingSteps = new HashSet<>();
-      for ( Hop hop : outgoing ) {
-        outgoingSteps.add( hop.outgoingStep() );
-      }
-
-      incomingSteps.forEach( s -> LOG.warn( "  -> Incoming: {}", s.getStepMeta().getName() ) );
-      outgoingSteps.forEach( s -> LOG.warn( "  -> Outgoing: {}", s.getStepMeta().getName() ) );
-
-      step.setIncoming( incomingSteps );
-      step.setOutgoing( outgoingSteps );
+      step.getIncoming().addAll( incoming );
+      step.getOutgoing().addAll( outgoing );
 
       executionPlan.add( step );
     }
     return executionPlan;
+  }
+
+  private void executePlan( List<Step> executionPlan ) {
+    LOG.warn( "RUNNING STEPS" );
+    LOG.warn( "=============================" );
+    for ( Step step : executionPlan ) {
+      LOG.warn( "***** -> {}", step.getStepMeta().getName() );
+      step.setSparkSession( transContext.getSparkSession() );
+      step.setStepRegistry( transContext.getStepRegistry() );
+      step.execute();
+    }
   }
 
   private DirectedGraph<Step, Hop> createGraph( TransMeta transMeta, StepRegistry stepRegistry ) {
@@ -123,7 +117,7 @@ public class Transformation implements Serializable {
     for ( HopMeta hopMeta : transMeta.getHops() ) {
       Step incoming = map.get( hopMeta.getIncoming() );
       Step outgoing = map.get( hopMeta.getOutgoing() );
-      graph.addEdge( incoming, outgoing );
+      graph.addEdge( incoming, outgoing, new Hop( hopMeta ) );
     }
     return graph;
   }

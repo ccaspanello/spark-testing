@@ -7,6 +7,7 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -24,7 +25,7 @@ import java.util.Set;
  *
  * Created by ccaspanello on 1/29/18.
  */
-public class StepRegistry {
+public class StepRegistry implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger( StepRegistry.class );
   private Map<Class<? extends StepMeta>, Class<? extends Step>> registry;

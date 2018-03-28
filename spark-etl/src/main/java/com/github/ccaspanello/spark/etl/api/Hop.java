@@ -1,6 +1,10 @@
 package com.github.ccaspanello.spark.etl.api;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.jgrapht.graph.DefaultEdge;
+
+import javax.rmi.CORBA.StubDelegate;
 
 /**
  * Hop
@@ -12,6 +16,13 @@ import org.jgrapht.graph.DefaultEdge;
  */
 public class Hop extends DefaultEdge {
 
+    private HopMeta hopMeta;
+    private Dataset<Row> data;
+
+    public Hop(HopMeta hopMeta){
+        this.hopMeta = hopMeta;
+    }
+
     //<editor-fold desc="Getters & Setters">
     public Step incomingStep() {
         return (Step) getSource();
@@ -20,5 +31,18 @@ public class Hop extends DefaultEdge {
     public Step outgoingStep() {
         return (Step) getTarget();
     }
+
+    public Dataset<Row> getData() {
+        return data;
+    }
+
+    public void setData( Dataset<Row> data ) {
+        this.data = data;
+    }
+
+    public HopMeta getHopMeta() {
+        return hopMeta;
+    }
     //</editor-fold>
+
 }

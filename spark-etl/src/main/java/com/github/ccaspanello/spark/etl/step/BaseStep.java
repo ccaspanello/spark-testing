@@ -1,67 +1,78 @@
 package com.github.ccaspanello.spark.etl.step;
 
+import com.github.ccaspanello.spark.etl.StepRegistry;
+import com.github.ccaspanello.spark.etl.TransContext;
+import com.github.ccaspanello.spark.etl.api.Hop;
+import com.github.ccaspanello.spark.etl.api.HopType;
 import com.github.ccaspanello.spark.etl.api.Step;
 import com.github.ccaspanello.spark.etl.api.StepMeta;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Common Base Step Logic
- *
+ * <p>
  * Created by ccaspanello on 1/29/2018.
  */
 public abstract class BaseStep<E extends StepMeta> implements Step {
 
-    private SparkSession sparkSession;
-    private E meta;
-    private Set<Step> incoming;
-    private Set<Step> outgoing;
-    private Dataset<Row> data;
+  private final E meta;
 
-    public BaseStep(E meta){
-        this.meta = meta;
-    }
+  private SparkSession sparkSession;
+  private StepRegistry stepRegistry;
+  private Set<Hop> incoming;
+  private Set<Hop> outgoing;
+  private Set<String> resultFiles;
 
-    //<editor-fold desc="Getters & Setters">
-    @Override
-    public void setIncoming(Set<Step> incoming) {
-        this.incoming = incoming;
-    }
-    @Override
-    public void setOutgoing(Set<Step> outgoing) {
-        this.outgoing = outgoing;
-    }
+  public BaseStep( E meta ) {
+    this.incoming = new HashSet<>(  );
+    this.outgoing = new HashSet<>(  );
+    this.resultFiles = new HashSet<>(  );
+    this.meta = meta;
+  }
 
-    public SparkSession getSparkSession() {
-        return sparkSession;
-    }
+  public Hop outgoingHop( HopType hopType ) {
+    return outgoing.stream().filter( hop -> hop.getHopMeta().getHopType().equals( hopType ) ).findFirst().get();
+  }
 
-    public void setSparkSession(SparkSession sparkSession) {
-        this.sparkSession = sparkSession;
-    }
+  //<editor-fold desc="Getters & Setters">
+  public Set<Hop> getIncoming() {
+    return incoming;
+  }
 
-    public E getStepMeta(){
-        return meta;
-    }
+  public Set<Hop> getOutgoing() {
+    return outgoing;
+  }
 
+  public SparkSession getSparkSession() {
+    return sparkSession;
+  }
 
-    public Set<Step> getIncoming() {
-        return incoming;
-    }
+  public void setSparkSession( SparkSession sparkSession ) {
+    this.sparkSession = sparkSession;
+  }
 
-    public Set<Step> getOutgoing() {
-        return outgoing;
-    }
+  public StepRegistry getStepRegistry() {
+    return stepRegistry;
+  }
 
-    public Dataset<Row> getData() {
-        return data;
-    }
+  public void setStepRegistry( StepRegistry stepRegistry ) {
+    this.stepRegistry = stepRegistry;
+  }
 
-    public void setData(Dataset<Row> data) {
-        this.data = data;
-    }
-    //</editor-fold>
+  public E getStepMeta() {
+    return meta;
+  }
+
+  public Set<String> getResultFiles(){
+    return resultFiles;
+  }
+
+  public boolean isTerminating(){
+    return incoming.size() > 0 && outgoing.size() == 0;
+  }
+  //</editor-fold>
 }

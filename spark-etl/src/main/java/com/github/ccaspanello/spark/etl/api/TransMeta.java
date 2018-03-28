@@ -1,5 +1,6 @@
 package com.github.ccaspanello.spark.etl.api;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,16 +13,14 @@ import java.util.Map;
  * <p>
  * Created by ccaspanello on 1/29/18.
  */
-public class TransMeta {
+public class TransMeta implements Serializable {
 
   private final String name;
-  private final Map<String, Object> parameters;
   private final List<StepMeta> steps;
   private final List<HopMeta> hops;
 
   public TransMeta( String name ) {
     this.name = name;
-    this.parameters = new HashMap<>();
     this.steps = new ArrayList<>();
     this.hops = new ArrayList<>();
   }
@@ -29,10 +28,6 @@ public class TransMeta {
   //<editor-fold desc="Getters & Setters">
   public String getName() {
     return name;
-  }
-
-  public Map<String, Object> getParameters() {
-    return parameters;
   }
 
   public List<StepMeta> getSteps() {

@@ -1,10 +1,12 @@
 package com.github.ccaspanello.spark.etl.api;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.github.ccaspanello.spark.etl.StepRegistry;
+import com.github.ccaspanello.spark.etl.TransContext;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,12 +28,19 @@ public interface Step extends Serializable {
 
   SparkSession getSparkSession();
 
+  void setStepRegistry( StepRegistry stepRegistry );
+
+  StepRegistry getStepRegistry();
+
   StepMeta getStepMeta();
 
-  void setIncoming( Set<Step> incoming );
+  Set<Hop> getIncoming();
 
-  void setOutgoing( Set<Step> outgoing );
+  Set<Hop> getOutgoing();
 
-  Dataset<Row> getData();
+  Set<String> getResultFiles();
+
+  boolean isTerminating();
+
   //</editor-fold>
 }

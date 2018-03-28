@@ -1,11 +1,16 @@
 package com.github.ccaspanello.spark.etl.api;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+
+import java.io.Serializable;
+
 /**
  * HopMeta
  * <p>
  * Created by ccaspanello on 1/29/18.
  */
-public class HopMeta {
+public class HopMeta implements Serializable {
 
   /**
    * Incoming Step Reference
@@ -17,14 +22,18 @@ public class HopMeta {
    */
   private final String outgoing;
 
+  private final HopType hopType;
+
   public HopMeta( StepMeta incoming, StepMeta outgoing ) {
     this.incoming = incoming.getName();
     this.outgoing = outgoing.getName();
+    this.hopType = HopType.DEFAULT;
   }
 
-  public HopMeta( String incoming, String outgoing ) {
-    this.incoming = incoming;
-    this.outgoing = outgoing;
+  public HopMeta( StepMeta incoming, StepMeta outgoing, HopType hopType ) {
+    this.incoming = incoming.getName();
+    this.outgoing = outgoing.getName();
+    this.hopType = hopType;
   }
 
   //<editor-fold desc="Getters & Setters">
@@ -35,5 +44,10 @@ public class HopMeta {
   public String getOutgoing() {
     return outgoing;
   }
+
+  public HopType getHopType() {
+    return hopType;
+  }
   //</editor-fold>
+
 }

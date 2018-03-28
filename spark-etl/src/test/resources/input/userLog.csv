@@ -1,6 +1,0 @@
-username,date,event
-user1,1/1/2018 11:10:00,Failed password attempt
-user1,1/1/2018 11:15:00,Field validation failed
-user1,1/1/2018 11:10:00,Failed password attempt
-user2,2/2/2018 12:10:00,Failed password attempt
-user2,2/2/2018 12:15:00,Field validation failed

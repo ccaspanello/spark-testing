@@ -1,27 +1,29 @@
 package com.github.ccaspanello.spark.etl.api;
 
-import com.github.ccaspanello.spark.etl.AppContext;
+import com.github.ccaspanello.spark.etl.TransContext;
 import com.github.ccaspanello.spark.etl.GuiceExampleModule;
-import com.github.ccaspanello.spark.etl.SampleTransformationGenerator;
-import com.github.ccaspanello.spark.etl.gson.TransMetaConverter;
-import org.apache.commons.io.FileUtils;
+import com.github.ccaspanello.spark.etl.step.calc.CalculatorMeta;
+import com.github.ccaspanello.spark.etl.step.csvInput.CsvInput;
+import com.github.ccaspanello.spark.etl.step.csvInput.CsvInputMeta;
+import com.github.ccaspanello.spark.etl.step.csvOutput.CsvOutputMeta;
+import com.github.ccaspanello.spark.etl.step.datagrid.Column;
+import com.github.ccaspanello.spark.etl.step.datagrid.DataGridMeta;
+import com.github.ccaspanello.spark.etl.step.log.WriteToLogMeta;
+import com.github.ccaspanello.spark.etl.step.rowsFromResult.RowsFromResultMeta;
+import com.github.ccaspanello.spark.etl.step.rowsToResult.RowsToResultMeta;
+import com.github.ccaspanello.spark.etl.step.transExecutor.TransExecutorMeta;
+import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.testng.Assert.assertNotNull;
 
 /**
  * Created by ccaspanello on 2/4/18.
@@ -32,7 +34,7 @@ public class TransformationTest {
   private static final Logger LOG = LoggerFactory.getLogger( TransformationTest.class );
 
   @Inject
-  private AppContext appContext;
+  private TransContext transContext;
 
   private File output;
 
@@ -48,89 +50,90 @@ public class TransformationTest {
   }
 
   @Test
-  public void testFromFile() throws Exception {
-
-    Map<String, String> parameters = new HashMap<>();
-    parameters.put("outputDir", output.getAbsolutePath());
-
-    File jsonFile = new File( this.getClass().getClassLoader().getResource( "sample.json" ).toURI() );
-    TransMetaConverter transMetaConverter = new TransMetaConverter();
-    TransMeta transMeta = transMetaConverter.fromJson( jsonFile );
-
-    Transformation transformation = new Transformation( appContext, transMeta );
-    transformation.injectParameters( parameters );
-    transformation.execute();
-
-    File[] files = new File(output,"sample").listFiles();
-    assertNotNull( files );
-
-    List<File> csvFiles = Arrays.stream( files )
-      .filter( line -> line.getName().endsWith( ".csv" ) ).collect( Collectors.toList() );
-
-    // TODO Work on assertion
-    LOG.info( "OUTPUT - Files: {}", csvFiles.size() );
-    LOG.info( "=========================" );
-    for ( File file : csvFiles ) {
-      List<String> lines = FileUtils.readLines( file );
-      for ( String line : lines ) {
-        LOG.info( "{}", line );
-      }
-    }
-  }
-
-  @Test
   public void testSimple() throws Exception {
+    TransMeta transMeta = parentTransMeta();
 
-    Map<String, String> parameters = new HashMap<>();
-    parameters.put("outputDir", output.getAbsolutePath());
-
-    TransMeta transMeta = SampleTransformationGenerator.simple();
-
-    Transformation transformation = new Transformation( appContext, transMeta );
-    transformation.injectParameters( parameters );
+    Transformation transformation = new Transformation( transContext, transMeta );
     transformation.execute();
 
-    File[] files = new File(output,"simple").listFiles();
-    assertNotNull( files );
+  }
 
-    List<File> csvFiles = Arrays.stream( files )
-      .filter( line -> line.getName().endsWith( ".csv" ) ).collect( Collectors.toList() );
+  public TransMeta parentTransMeta() {
 
-    // TODO Work on assertion
-    LOG.info( "OUTPUT - Files: {}", csvFiles.size() );
-    LOG.info( "=========================" );
-    for ( File file : csvFiles ) {
-      List<String> lines = FileUtils.readLines( file );
-      for ( String line : lines ) {
-        LOG.info( "{}", line );
-      }
+    // Data Grid
+    DataGridMeta dataGrid = new DataGridMeta( "Data Grid" );
+    dataGrid.getColumns().add( new Column( "key", DataTypes.StringType ) );
+    dataGrid.getColumns().add( new Column( "value", DataTypes.IntegerType ) );
+    for ( int i = 0; i < 25; i++ ) {
+      List<String> row = new ArrayList<>();
+      row.add("key"+i);
+      row.add(""+i);
+      dataGrid.getData().add( row );
     }
+
+    // TransExecutor
+    TransExecutorMeta transExecutor = new TransExecutorMeta( "Trans Executor" );
+    TransMeta subTransMeta = childSubTransMeta();
+    transExecutor.setTransMeta( subTransMeta );
+
+    // CSV Input
+    CsvInputMeta csvInput = new CsvInputMeta("CSV Input");
+    csvInput.setPath( "/Users/ccaspanello/Desktop/temp/childOutput1" );
+    csvInput.setUsePathsFromStream(true);
+
+    // Write to Log
+    WriteToLogMeta main = new WriteToLogMeta( "Write To Log: Main" );
+    WriteToLogMeta resultRows = new WriteToLogMeta( "Write To Log: Result Rows" );
+    WriteToLogMeta resultFiles = new WriteToLogMeta( "Write To Log: Result Files" );
+
+    // Trans Meta
+    TransMeta transMeta = new TransMeta( "Parent Transformation" );
+    transMeta.getSteps().add( dataGrid );
+    transMeta.getSteps().add( transExecutor );
+    transMeta.getSteps().add( main );
+    transMeta.getSteps().add( csvInput );
+    transMeta.getSteps().add( resultRows );
+    transMeta.getSteps().add( resultFiles );
+
+    transMeta.getHops().add( new HopMeta( dataGrid, transExecutor ) );
+    transMeta.getHops().add( new HopMeta( transExecutor, main, HopType.MAIN ) );
+    transMeta.getHops().add( new HopMeta( transExecutor, resultRows, HopType.RESULT_ROWS ) );
+    transMeta.getHops().add( new HopMeta( transExecutor, csvInput, HopType.RESULT_FILES ) );
+    transMeta.getHops().add( new HopMeta( csvInput, resultFiles ) );
+
+    return transMeta;
   }
 
+  private TransMeta childSubTransMeta() {
 
-  @DataProvider(name = "testData")
-  public Object[][] testData() {
+    RowsFromResultMeta rowsFromResult = new RowsFromResultMeta( "Rows from result" );
 
-    SampleTransformationGenerator generator = new SampleTransformationGenerator();
+    CalculatorMeta calculator = new CalculatorMeta( "Child Calculator" );
+    calculator.setColumnName( "Child Calc" );
+    calculator.setFieldA( "value" );
+    calculator.setFieldB( "value" );
 
+    CsvOutputMeta csvOutput1 = new CsvOutputMeta( "CSV Output 1" );
+    csvOutput1.setPath("/Users/ccaspanello/Desktop/temp/childOutput1");
 
-    return new Object[][] {
-      { "Simple", generator.simple() },
-      //{ "Split", generator.split() },
-      { "Combine", generator.combine() },
-      //{ "Complex", generator.complex() }
-    };
-  }
+    CsvOutputMeta csvOutput2 = new CsvOutputMeta( "CSV Output 2" );
+    csvOutput2.setPath("/Users/ccaspanello/Desktop/temp/childOutput2");
 
-  @Test(dataProvider = "testData")
-  public void dataDrivenTest(String name, TransMeta transMeta) {
-    Map<String, String> parameters = new HashMap<>();
-    parameters.put("outputDir", output.getAbsolutePath());
-    parameters.put("projectDir", this.getClass().getClassLoader().getResource( "" ).toString());
+    RowsToResultMeta rowsToResult = new RowsToResultMeta( "Rows to result" );
 
-    Transformation transformation = new Transformation( appContext, transMeta );
-    transformation.injectParameters( parameters );
-    transformation.execute();
+    TransMeta transMeta = new TransMeta( "Child Transformation" );
+    transMeta.getSteps().add( rowsFromResult );
+    transMeta.getSteps().add( calculator );
+    transMeta.getSteps().add( csvOutput1 );
+    transMeta.getSteps().add( csvOutput2 );
+    transMeta.getSteps().add( rowsToResult );
+
+    transMeta.getHops().add( new HopMeta( rowsFromResult, calculator ) );
+    transMeta.getHops().add( new HopMeta( calculator, csvOutput1 ) );
+    transMeta.getHops().add( new HopMeta( csvOutput1, csvOutput2 ) );
+    transMeta.getHops().add( new HopMeta( csvOutput2, rowsToResult) );
+
+    return transMeta;
   }
 
 }
