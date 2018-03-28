@@ -3,7 +3,6 @@ package com.github.ccaspanello.spark.etl.api;
 import com.github.ccaspanello.spark.etl.TransContext;
 import com.github.ccaspanello.spark.etl.GuiceExampleModule;
 import com.github.ccaspanello.spark.etl.step.calc.CalculatorMeta;
-import com.github.ccaspanello.spark.etl.step.csvInput.CsvInput;
 import com.github.ccaspanello.spark.etl.step.csvInput.CsvInputMeta;
 import com.github.ccaspanello.spark.etl.step.csvOutput.CsvOutputMeta;
 import com.github.ccaspanello.spark.etl.step.datagrid.Column;

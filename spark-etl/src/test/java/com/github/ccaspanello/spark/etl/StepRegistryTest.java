@@ -4,6 +4,10 @@ import com.github.ccaspanello.spark.etl.api.Step;
 import com.github.ccaspanello.spark.etl.api.StepMeta;
 import com.github.ccaspanello.spark.etl.step.calc.Calculator;
 import com.github.ccaspanello.spark.etl.step.calc.CalculatorMeta;
+import com.github.ccaspanello.spark.etl.step.csvInput.CsvInput;
+import com.github.ccaspanello.spark.etl.step.csvInput.CsvInputMeta;
+import com.github.ccaspanello.spark.etl.step.csvOutput.CsvOutput;
+import com.github.ccaspanello.spark.etl.step.csvOutput.CsvOutputMeta;
 import com.github.ccaspanello.spark.etl.step.datagrid.DataGrid;
 import com.github.ccaspanello.spark.etl.step.datagrid.DataGridMeta;
 import com.github.ccaspanello.spark.etl.step.log.WriteToLog;
@@ -34,8 +38,10 @@ public class StepRegistryTest {
 
     Map<Class<? extends StepMeta>, Class<? extends Step>> registry = stepRegistry.getRegistry();
 
-    assertEquals(registry.size(), 6);
+    assertEquals(registry.size(), 8);
     assertEquals(registry.get(CalculatorMeta.class), Calculator.class);
+    assertEquals(registry.get(CsvInputMeta.class), CsvInput.class);
+    assertEquals(registry.get(CsvOutputMeta.class), CsvOutput.class);
     assertEquals(registry.get(DataGridMeta.class), DataGrid.class);
     assertEquals(registry.get(WriteToLogMeta.class), WriteToLog.class);
 

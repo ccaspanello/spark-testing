@@ -1,7 +1,6 @@
 package com.github.ccaspanello.spark.etl.step;
 
 import com.github.ccaspanello.spark.etl.StepRegistry;
-import com.github.ccaspanello.spark.etl.TransContext;
 import com.github.ccaspanello.spark.etl.api.Hop;
 import com.github.ccaspanello.spark.etl.api.HopType;
 import com.github.ccaspanello.spark.etl.api.Step;
@@ -9,7 +8,6 @@ import com.github.ccaspanello.spark.etl.api.StepMeta;
 import org.apache.spark.sql.SparkSession;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
