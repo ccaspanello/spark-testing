@@ -18,10 +18,10 @@ public class GuiceExampleModule implements Module {
   @Override
   public void configure( Binder binder ) {
     SparkConf sparkConf = new SparkConf();
-    sparkConf.set( "spark.eventLog.enabled", "true" );
+    //sparkConf.set( "spark.eventLog.enabled", "true" );
     sparkConf.set( "spark.driver.host", "localhost" );
     //sparkConf.set( "spark.driver.allowMultipleContexts", "true" );
-    sparkConf.set( "spark.logLineage", "true" );
+    //sparkConf.set( "spark.logLineage", "true" );
     SparkContext sparkContext = new SparkContext( "local[*]", "SparkTest", sparkConf );
 
     StepRegistry stepRegistry = new StepRegistry();
