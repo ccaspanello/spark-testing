@@ -77,7 +77,7 @@ public class TransformationTest {
 
     // CSV Input
     CsvInputMeta csvInput = new CsvInputMeta("CSV Input");
-    csvInput.setPath( "/Users/ccaspanello/Desktop/temp/childOutput1" );
+    csvInput.setPath( "./temp/childOutput1" );
     csvInput.setUsePathsFromStream(true);
 
     // Write to Log
@@ -113,10 +113,10 @@ public class TransformationTest {
     calculator.setFieldB( "value" );
 
     CsvOutputMeta csvOutput1 = new CsvOutputMeta( "CSV Output 1" );
-    csvOutput1.setPath("/Users/ccaspanello/Desktop/temp/childOutput1");
+    csvOutput1.setPath("./temp/childOutput1");
 
     CsvOutputMeta csvOutput2 = new CsvOutputMeta( "CSV Output 2" );
-    csvOutput2.setPath("/Users/ccaspanello/Desktop/temp/childOutput2");
+    csvOutput2.setPath("./temp/childOutput2");
 
     RowsToResultMeta rowsToResult = new RowsToResultMeta( "Rows to result" );
 
