@@ -16,7 +16,9 @@
  */
 package com.github.ccaspanello.spark.testing;
 
+import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +34,17 @@ public class Main {
   private static final Logger LOG = LoggerFactory.getLogger( Main.class );
 
   public static void main( String[] args ) {
-    int input = parseArgs( args );
-    SparkContext sparkContext = SparkContext.getOrCreate();
-    SparkPi sparkPi = new SparkPi( sparkContext );
-    double result = sparkPi.run( Integer.parseInt( args[ 0 ] ) );
-    LOG.info( "Result: {}" );
+    int slices = parseArgs( args );
+    SparkSession spark = SparkSession.builder().getOrCreate();
+
+    SparkPi sparkPi = new SparkPi( spark );
+    double result = sparkPi.run( slices );
+
+    LOG.info( "*************************" );
+    LOG.info( "Result: {}", result );
+    LOG.info( "*************************" );
+
+    spark.stop();
   }
 
   private static int parseArgs( String[] args ) {
@@ -53,7 +61,7 @@ public class Main {
       return Integer.valueOf( arg );
     } catch ( NumberFormatException e ) {
       String msg = "Input %s is not an integer.  Please enter an integer.";
-      throw new SparkPiException( String.format(msg, arg) );
+      throw new SparkPiException( String.format( msg, arg ) );
     }
   }
 

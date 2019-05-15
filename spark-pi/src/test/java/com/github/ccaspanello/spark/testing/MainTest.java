@@ -1,38 +1,55 @@
 package com.github.ccaspanello.spark.testing;
 
-import org.apache.spark.SparkContext;
-import org.testng.annotations.Guice;
-import org.testng.annotations.Test;
-
-import javax.inject.Inject;
+import org.apache.spark.sql.SparkSession;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Created by ccaspanello on 2/16/18.
  */
-@Guice(modules = GuiceExampleModule.class)
 public class MainTest {
+
+  @Rule
+  public ExpectedException expectedEx = ExpectedException.none();
 
   public static final String MSG1 = "Invalid number of arguments 0.  Valid number of arguments is 1.";
   public static final String MSG2 = "Invalid number of arguments 2.  Valid number of arguments is 1.";
   public static final String MSG3 = "Input foo is not an integer.  Please enter an integer.";
 
-  @Inject
-  private SparkContext sc;
+  @Before
+  public void beforeTest(){
+    SparkSession.builder().master( "local[*]" ).getOrCreate();
+  }
 
-  @Test(expectedExceptions = SparkPiException.class, expectedExceptionsMessageRegExp = MSG1)
+  @Test
   public void testParameterCountError1(){
+
+    expectedEx.expect( SparkPiException.class );
+    expectedEx.expectMessage( MSG1 );
+
     Main.main( new String[]{} );
   }
 
-  @Test(expectedExceptions = SparkPiException.class, expectedExceptionsMessageRegExp = MSG2)
+  @Test
   public void testParameterCountError2(){
+
+    expectedEx.expect( SparkPiException.class );
+    expectedEx.expectMessage( MSG2 );
+
     Main.main( new String[]{"1","2"} );
   }
 
-  @Test(expectedExceptions = SparkPiException.class, expectedExceptionsMessageRegExp = MSG3)
+  @Test
   public void testParseError(){
+
+    expectedEx.expect( SparkPiException.class );
+    expectedEx.expectMessage( MSG3 );
+
     Main.main( new String[]{"foo"} );
   }
+
   @Test
   public void testValidParameters(){
     Main.main( new String[]{"100"} );

@@ -21,6 +21,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.sql.SparkSession;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,14 +32,13 @@ import java.util.List;
  */
 public class SparkPi implements Serializable {
 
-  private SparkContext sc;
+  private JavaSparkContext jsc;
 
-  public SparkPi( SparkContext sc ) {
-    this.sc = sc;
+  public SparkPi( SparkSession spark ) {
+    this.jsc = new JavaSparkContext( spark.sparkContext() );
   }
 
   public double run(int slices){
-    JavaSparkContext jsc = new JavaSparkContext( sc );
     int n = 100000 * slices;
     List<Integer> l = new ArrayList<>(n);
     for (int i = 0; i < n; i++) {
